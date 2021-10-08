@@ -1,0 +1,107 @@
+# Class Name: YAMLUtil.sk
+# Author: nac#3030
+# Deps: skript-YAML, skBee
+
+
+# Give a sword based on it's YAML ID.
+#
+# PARAMS:
+#
+# id: The ID of the sword. NOTE: Get a list of IDs by typing out "/idlist" in-game.
+# rarity: Rarity of the sword. Defaults to "common". NOTE: Get a list of rarities by typing "/raritylist" in-game.
+# p: A player to give the sword to.
+function Sword_Give(id: text, rarity: text, p: player):
+    load yaml "plugins/Skript/scripts/XS-Data/properties/rarities.yaml" as "rarities.yaml"
+    load yaml "plugins/Skript/scripts/XS-Data/properties/swords.yaml" as "swords.yaml"
+
+    set {_sword::Item} to yaml value "%{_id}%.Item" from "swords.yaml"
+    set {_sword::Display} to yaml value "%{_id}%.Display" from "swords.yaml"
+    set {_sword::Enchantments::*} to yaml list "%{_id}%.Enchantments" from "swords.yaml"
+    set {_sword::Rarity} to yaml value "%{_rarity}%.Display" from "rarities.yaml"
+
+    set {_sword::BaseDamage} to yaml value "%{_id}%.Damage" from "swords.yaml"
+    set {_sword::RarityDamage} to yaml value "%{_rarity}%.Damage.Multi" from "rarities.yaml"
+    set {_sword::RarityDamageType} to yaml value "%{_rarity}%.Damage.Type" from "rarities.yaml"
+
+    loop {_sword::Enchantments::*}:
+        enchant {_sword::Item} with loop-value
+
+    add "{YAML-ID:%{_id}%}" to nbt of {_sword::Item}
+    add "{YAML-Rarity:%{_rarity}%}" to nbt of {_sword::Item}
+
+    add "" to lore of {_sword::Item}
+    add "&8Damage: &c%{_sword::BaseDamage}%" to lore of {_sword::Item}
+    
+    add "&8Rarity Damage: &c+%{_sword::RarityDamage}%" to lore of {_sword::Item} if {_sword::RarityDamageType} is "ADD"
+    add "&8Rarity Damage: &cx%{_sword::RarityDamage}%" to lore of {_sword::Item} if {_sword::RarityDamageType} is "MULTIPLY"
+    add "" to lore of {_sword::Item}
+
+    add {_sword::Rarity} to lore of {_sword::Item}
+    set name of {_sword::Item} to {_sword::Display}
+
+    give {_p} unbreakable {_sword::Item} with all flags hidden
+
+    unload yaml "rarities.yaml"
+    unload yaml "swords.yaml"
+
+# Returns a list of all the root nodes of a YAML file.
+#
+# PARAMS:
+#
+# yaml_path: the string containing the path to the desired YAML.
+function GetRootNodes(yaml_path: text) :: objects:
+	load yaml {_yaml_path} as "yaml"
+
+	loop yaml nodes of "yaml":
+		loop yaml node keys loop-value from "yaml":
+			set {_node::*} to loop-value-1 split at "."
+			if {_rootNodes::*} does not contain {_node::1}:
+				add {_node::1} to {_rootNodes::*}
+
+	return {_rootNodes::*}
+	unload "yaml"
+
+# Registers a new sword based on the properties specified.
+#
+# PARAMS:
+#
+# id: ID of the sword.
+# i: The itemstack you want the sword to be.
+# name: Name of the sword.
+# enchantments: List or single entry of enchantments you want the sword to have.
+# base_damage: The base amount of damage you want the sword to deal.
+function Sword_Register(id: text, i: item, name: text, enchantments: objects, base_damage: num):
+    load yaml "plugins/Skript/scripts/XS-Data/properties/swords.yaml" as "swords.yaml"
+    
+    set skript-yaml value "%{_id}%.ID" from "swords.yaml" to "%{_id}%"
+    set skript-yaml value "%{_id}%.Item" from "swords.yaml" to {_i}
+    set skript-yaml value "%{_id}%.Display" from "swords.yaml" to colored {_name}
+    set skript-yaml value "%{_id}%.Damage" from "swords.yaml" to {_base_damage}
+    
+    clear skript-yaml list "%{_id}%.Enchantments" from "swords.yaml"
+    loop {_enchantments::*}:
+        add loop-value to skript-yaml list "%{_id}%.Enchantments" from "swords.yaml"
+    
+    save yaml "swords.yaml"
+    unload yaml "swords.yaml"
+
+# Registers a new rarity based on the properties specified.
+#
+# PARAMS:
+#
+# id: ID of the rarity.
+# display: What you want the display name of the rarity to be in the lore.
+# damage_multi: What you want the base damage to be increased by.
+# damage_multi_type: Either MUTLIPLY, or ADD.
+function Rarity_Register(id: text, display: text, damage_multi: num, damage_multi_type: text):
+    load yaml "plugins/Skript/scripts/XS-Data/properties/rarities.yaml" as "rarities.yaml"
+
+    set skript-yaml value "%{_id}%.ID" from "rarities.yaml" to "%{_id}%"
+    set skript-yaml value "%{_id}%.Display" from "rarities.yaml" to colored {_display}
+    set skript-yaml value "%{_id}%.Damage.Multi" from "rarities.yaml" to {_damage_multi}
+    set skript-yaml value "%{_id}%.Damage.Type" from "rarities.yaml" to "%{_damage_multi_type}%"
+
+    set the comment of yaml node "%{_id}%" from "rarities.yaml" to "Rarity '%{_id}%'"
+
+    save yaml "rarities.yaml"
+    unload yaml "rarities.yaml"
