@@ -7,7 +7,7 @@ command /giveWeapon <text> <text>:
 	permission: admin.weapon.give
 	trigger:
 		Give_Weapon(arg-1, arg-2, player)
-		send "Given weapon &e'%arg-1%'&f with rarity &e'%arg-2%'&f." to player
+		send "Given weapon &e'%arg-1%&e'&f with rarity &e'%arg-2%&e'&f." to player
 
 # Register a sword in-game.
 command /registerWeapon <text> <text> <num>:
@@ -22,8 +22,8 @@ command /registerWeapon <text> <text> <num>:
 			send "This entry already exists." to player
 		else:
 			set {_enchantments::*} to enchantments of player's tool
-			Sword_Register(arg-1, player's tool, {_a2}, {_enchantments::*}, arg-3)
-			send "Registerd weapon &e'%arg-1%'&f with display '%arg-2%'" to player
+			Weapon_Register(arg-1, player's tool, {_a2}, {_enchantments::*}, arg-3)
+			send "Registerd weapon &e'%arg-1%&e'&f with display &e'%colored arg-2%&e'&f." to player
 	
 		save yaml "weapons.yaml"
 		unload yaml "weapons.yaml"
@@ -41,7 +41,7 @@ command /registerRarity <text> <text> <num> <text>:
 			send "This entry already exists." to player
 		else:
 			Rarity_Register(arg-1, arg-2, arg-3, arg-4)
-			send "Registerd rarity &e'%arg-1%'&f with display '%arg-2%'" to player
+			send "Registerd rarity &e'%arg-1%&e'&f with display &e'%colored arg-2%&e'&f." to player
 		
 		save yaml "rarities.yaml"
 		unload yaml "rarities.yaml"
