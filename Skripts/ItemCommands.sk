@@ -6,7 +6,7 @@
 command /giveWeapon <text> <text>:
 	permission: admin.weapon.give
 	trigger:
-		Give_Weapon(arg-1, arg-2, player)
+		give Weapon(arg-1, arg-2) to player
 		send "Given weapon &e'%arg-1%&e'&f with rarity &e'%arg-2%&e'&f." to player
 
 # Register a sword in-game.
@@ -55,26 +55,11 @@ on tab complete of "/giveWeapon":
 on tab complete of "/registerRarity":
 	set tab completions for position 4 to "MULTIPLY" and "ADD"
 
+# Deals the correct amount of damage for the weapon.
 on damage:
+	if "YAML-Damage" tag of nbt of attacker's tool is set:
+		set {_weaponDamage} to "YAML-Damage" tag of nbt of attacker's tool
+	
+		set damage to {_weaponDamage}
 
-	load yaml "plugins/Skript/scripts/XS-Data/properties/rarities.yaml" as "rarities.yaml"
-	load yaml "plugins/Skript/scripts/XS-Data/properties/weapons.yaml" as "weapons.yaml"
-
-	set {_weaponId} to "YAML-ID" tag of nbt of attacker's tool
-	set {_weaponRarity} to "YAML-Rarity" tag of nbt of attacker's tool
-
-	set {_weaponDamage} to yaml value "%{_weaponId}%.Damage" in "weapons.yaml"
-	set {_weaponDamage.rarityMod} to yaml value "%{_weaponRarity}%.Damage.Multi" in "rarities.yaml"
-	set {_weaponDamage.rarityMod.Type} to yaml value "%{_weaponRarity}%.Damage.Type" in "rarities.yaml"
-
-	if {_weaponDamage.rarityMod.Type} is "ADD":
-		set {_dmg} to {_weaponDamage} + {_weaponDamage.rarityMod}
-	else if {_weaponDamage.rarityMod.Type} is "MULTIPLY":
-		set {_dmg} to {_weaponDamage} * {_weaponDamage.rarityMod}
-
-	unload yaml "rarities.yaml"
-	unload yaml "weapons.yaml"
-
-	set damage to {_dmg}
-
-	send action bar "&4%{_dmg} ? damage%" to attacker
+		send action bar "&c🗡 &4%damage%" to attacker

@@ -10,7 +10,7 @@
 # id: The ID of the weapon.
 # rarity: Rarity of the weapon.
 # p: A player to give the weapon to.
-function Give_Weapon(id: text, rarity: text, p: player):
+function Weapon(id: text, rarity: text) :: item:
     load yaml "plugins/Skript/scripts/XS-Data/properties/rarities.yaml" as "rarities.yaml"
     load yaml "plugins/Skript/scripts/XS-Data/properties/weapons.yaml" as "weapons.yaml"
 
@@ -29,17 +29,17 @@ function Give_Weapon(id: text, rarity: text, p: player):
     add "{YAML-ID:%{_id}%}" to nbt of {_weapon::Item}
     add "{YAML-Rarity:%{_rarity}%}" to nbt of {_weapon::Item}
 
-    add "" to lore of {_weapon::Item}
-    add "&8Damage: &c%{_weapon::BaseDamage}%" to lore of {_weapon::Item}
-    
-    add "&8Rarity Damage: &c+%{_weapon::RarityDamage}%" to lore of {_weapon::Item} if {_weapon::RarityDamageType} is "ADD"
-    add "&8Rarity Damage: &cx%{_weapon::RarityDamage}%" to lore of {_weapon::Item} if {_weapon::RarityDamageType} is "MULTIPLY"
-    add "" to lore of {_weapon::Item}
+    set {_weapon::FullDamage} to {_weapon::BaseDamage} + {_weapon::RarityDamage} if {_weapon::RarityDamageType} is "ADD"
+    set {_weapon::FullDamage} to {_weapon::BaseDamage} * {_weapon::RarityDamage} if {_weapon::RarityDamageType} is "MULTIPLY"
+    add "{YAML-Damage:%{_weapon::FullDamage}%}" to nbt of {_weapon::Item}
+
+    add "" and "&8Damage: &c%{_weapon::BaseDamage}%" to lore of {_weapon::Item}
+    add "&8Rarity Damage: &c+%{_weapon::RarityDamage}%" and "" to lore of {_weapon::Item} if {_weapon::RarityDamageType} is "ADD"
+    add "&8Rarity Damage: &cx%{_weapon::RarityDamage}%" and "" to lore of {_weapon::Item} if {_weapon::RarityDamageType} is "MULTIPLY"
 
     add {_weapon::Rarity} to lore of {_weapon::Item}
-    set name of {_weapon::Item} to {_weapon::Display}
 
-    give {_p} unbreakable {_weapon::Item} with all flags hidden
+    return unbreakable {_weapon::Item} named {_weapon::Display} with all flags hidden
 
     unload yaml "rarities.yaml"
     unload yaml "weapons.yaml"
