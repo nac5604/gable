@@ -13,16 +13,13 @@ command /giveWeapon <text> <text>:
 command /registerWeapon <text> <text> <num>:
 	permission: admin.weapon.register
 	trigger:
-		set {_a2} to arg-2
-		replace all """" with "" in {_a2}
-
 		load yaml "plugins/Skript/scripts/XS-Data/properties/weapons.yaml" as "weapons.yaml"
 
 		if yaml node arg-1 in "swords.yaml" exists:
 			send "This entry already exists." to player
 		else:
 			set {_enchantments::*} to enchantments of player's tool
-			Weapon_Register(arg-1, player's tool, {_a2}, {_enchantments::*}, arg-3)
+			Weapon_Register(arg-1, player's tool, arg-2, {_enchantments::*}, arg-3)
 			send "Registerd weapon &e'%arg-1%&e'&f with display &e'%colored arg-2%&e'&f." to player
 	
 		save yaml "weapons.yaml"
@@ -32,8 +29,6 @@ command /registerWeapon <text> <text> <num>:
 command /registerRarity <text> <text> <num> <text>:
 	permission: admin.rarity.register
 	trigger:
-		set {_a2} to arg-2
-		replace all """" with "" in {_a2}
 		
 		load yaml "plugins/Skript/scripts/XS-Data/properties/rarities.yaml" as "rarities.yaml"
 
