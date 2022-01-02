@@ -33,7 +33,7 @@ command /registerRarity <text> <text> <num> <text>:
 		load yaml "plugins/Skript/scripts/XS-Data/properties/rarities.yaml" as "rarities.yaml"
 
 		if yaml node arg-1 in "rarities.yaml" exists:
-			send "This entry already exists." to player
+			send "This rarity already exists." to player
 		else:
 			Rarity_Register(arg-1, arg-2, arg-3, arg-4)
 			send "Registerd rarity &e'%arg-1%&e'&f with display &e'%colored arg-2%&e'&f." to player
@@ -41,7 +41,39 @@ command /registerRarity <text> <text> <num> <text>:
 		save yaml "rarities.yaml"
 		unload yaml "rarities.yaml"
 
-# Tab completions for /giveSword.
+# (hopefully) unregisters a weapon.
+command /unregisterWeapon <text>:
+	permission: admin.weapon.unregister
+	trigger:
+
+		load yaml "plugins/Skript/scripts/XS-Data/properties/weapons.yaml" as "weapons.yaml"
+
+		if yaml node arg-1 in "weapons.yaml" exists:
+			send "This weapon does not exist." to player
+		else:
+			Weapon_Unregister(arg-1)
+			send "Unregistered weapon &e'%arg-1%&e'&f." to player
+
+		save yaml "weapons.yaml"
+		unload yaml "weapons.yaml"
+
+# (hopefully) unregisters a rarity.
+command /unregisterRarity <text>:
+	permission: admin.rarity.unregister
+	trigger:
+
+		load yaml "plugins/Skript/scripts/XS-Data/properties/rarities.yaml" as "rarities.yaml"
+
+		if yaml node arg-1 in "rarities.yaml" exists:
+			send "This rarity does not exist." to player
+		else:
+			Rarity_Unregister(arg-1)
+			send "Unregistered rarity &e'%arg-1%&e'&f." to player
+
+		save yaml "rarities.yaml"
+		unload yaml "rarities.yaml"
+
+# Tab completions for /giveWeapon.
 on tab complete of "/giveWeapon":
 	set tab completions for position 1 to GetRootNodes("plugins/Skript/scripts/XS-Data/properties/weapons.yaml")
 	set tab completions for position 2 to GetRootNodes("plugins/Skript/scripts/XS-Data/properties/rarities.yaml")
@@ -49,6 +81,14 @@ on tab complete of "/giveWeapon":
 # Tab completions for /registerRarity.
 on tab complete of "/registerRarity":
 	set tab completions for position 4 to "MULTIPLY" and "ADD"
+
+# Tab completion for /unregisterWeapon.
+on tab complete of "/unregisterWeapon":
+	set tab completions for position 1 to GetRootNodes("plugins/Skript/scripts/XS-Data/properties/weapons.yaml")
+
+# Tab completion for /unregisterRarity.
+on tab complete of "/unregisterRarity":
+	set tab completions for position 1 to GetRootNodes("plugins/Skript/scripts/XS-Data/properties/rarities.yaml")
 
 # Deals the correct amount of damage for the weapon.
 on damage:
