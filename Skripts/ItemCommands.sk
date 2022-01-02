@@ -48,7 +48,7 @@ command /unregisterWeapon <text>:
 
 		load yaml "plugins/Skript/scripts/XS-Data/properties/weapons.yaml" as "weapons.yaml"
 
-		if yaml node arg-1 in "weapons.yaml" exists:
+		if yaml node arg-1 in "weapons.yaml" does not exist:
 			send "This weapon does not exist." to player
 		else:
 			Weapon_Unregister(arg-1)
@@ -64,7 +64,7 @@ command /unregisterRarity <text>:
 
 		load yaml "plugins/Skript/scripts/XS-Data/properties/rarities.yaml" as "rarities.yaml"
 
-		if yaml node arg-1 in "rarities.yaml" exists:
+		if yaml node arg-1 in "rarities.yaml" does not exist:
 			send "This rarity does not exist." to player
 		else:
 			Rarity_Unregister(arg-1)
