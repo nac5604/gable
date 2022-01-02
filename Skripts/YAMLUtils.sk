@@ -106,10 +106,12 @@ function Rarity_Register(id: text, display: text, damage_multi: num, damage_mult
     save yaml "rarities.yaml"
     unload yaml "rarities.yaml"
 
+# TO-DO: Figure out why tf it wont delete the root node.
+
 function Weapon_Unregister(id: text):
     load yaml "plugins/Skript/scripts/XS-Data/properties/weapons.yaml" as "weapons.yaml"
 
-    set all yaml nodes from "%{_id}%" to ""
+    set yaml value "%{_id}%" in "weapons.yaml" to ""
 
     save yaml "weapons.yaml"
     unload yaml "weapons.yaml"
@@ -117,7 +119,7 @@ function Weapon_Unregister(id: text):
 function Rarity_Unregister(id: text):
     load yaml "plugins/Skript/scripts/XS-Data/properties/rarities.yaml" as "rarities.yaml"
 
-    set all yaml nodes from "%{_id}%" to ""
+    set yaml value "%{_id}%" in "rarities.yaml" to ""
 
     save yaml "rarities.yaml"
     unload yaml "rarities.yaml"
