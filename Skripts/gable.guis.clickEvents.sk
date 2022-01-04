@@ -1,0 +1,39 @@
+options:
+    item-file: "plugins/Skript/scripts/gable/items.dat"
+    modifier-file: "plugins/Skript/scripts/gable/modifiers.dat"
+
+on inventory-click:
+    if event-inventory = (metadata tag "gable.modifierEditor" of player):
+        cancel event
+
+        if clicked slot is not air:
+
+            # File and item-related metadata/nbt
+            set {_file} to nbt compound from file {@modifier-file}
+            set {_currentMod} to metadata tag "gable.currentModifier" of player
+
+            # Enchantments of the current modifier
+            set {_enchants::*} to string list tag "%{_currentMod}%;gable.modifiers" of {_file}
+
+            # Raw name of clicked item
+            set {_modifierTag} to uncolored name of clicked slot
+
+            # Write modifier
+            if {_modifierTag} is not empty:
+                if {_enchants::*} does not contain "%{_modifierTag}%":
+                    add "%{_modifierTag}%" to {_enchants::*}
+                    send "enchants = %{_enchants::*}%"
+                    set string list tag "%{_currentMod}%;gable.modifiers" of {_file} to {_enchants::*}
+                else:
+                    remove "%{_modifierTag}%" from {_enchants::*}
+                    send "enchants = %{_enchants::*}%"
+                    set string list tag "%{_currentMod}%;gable.modifiers" of {_file} to {_enchants::*}
+
+                set line 1 of lore of clicked slot to "&a&ltrue" if {_enchants::*} contains "%{_modifierTag}%" else "&c&lfalse"
+                if {_enchants::*} contains "%{_modifierTag}%":
+                    enchant clicked slot with efficiency 0
+                else:
+                    disenchant clicked slot
+            
+            # Save changes
+            save nbt file of {_file}

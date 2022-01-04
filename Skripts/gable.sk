@@ -2,36 +2,51 @@
 # nac5604
 # Requirements: Skript, SkBee-1.14.2
 
-# arg-1: id of item
-# arg-2: display name of item
-# [arg-3]: base damage
-command /registerItem <text> <text> [<num=1>]:
+options:
+    item-file: "plugins/Skript/scripts/gable/items.dat"
+    modifier-file: "plugins/Skript/scripts/gable/modifiers.dat"
+
+command /item <text> [<text=arg-1>] [<num=1>]:
     trigger:
-        set {_nbt} to nbt compound from file "plugins/Skript/scripts/items.dat"
-        set {_uItem} to unbreakable player's tool with all flags hidden
+        set {_nbt} to nbt compound from file {@item-file}
 
-        set tag "%arg-1%;data" of {_nbt} to nbt compound of {_uItem}
-        set tag "%arg-1%;displayName" of {_nbt} to colored arg-2
-        set tag "%arg-1%;baseDamage" of {_nbt} to arg-3
+        set {_currentData} to tag "%arg-1%;gable.data" of {_nbt}
+        set {_currentName} to tag "%arg-1%;gable.displayName" of {_nbt}
+        set {_currentBaseDamage} to tag "%arg-1%;gable.baseDamage" of {_nbt}
+        set {_currentModifiers::*} to string list tag "%arg-1%;gable.modifiers"
 
-        save nbt file of {_nbt}
+        if tag "%arg-1%" of {_nbt} exists:
+            # Editing the item
+            set metadata tag "itemEditorGUI" of player to chest inventory with 3 rows named "&0Editing Item: %arg-1%"
+            set slot 12 of metadata tag "itemEditorGUI" of player to name tag named "&7Item Name" with lore "&7Currently: '%{_currentName} ? "Not Set"%'
+            set slot 13 of metadata tag "itemEditorGUI" of player to paper named "&7Base Damage" with lore "&7Currently: '%{_currentBaseDamage} ? "Not Set"%'"
+            set slot 14 of metadata tag "itemEditorGUI" of player to enchanted book named "&7Modifiers" with lore "&7Currently:"
 
-        send "&7Registered item &e%arg-1%&7:"
-        send "&8 -"
-        send "&e - ID = &6%arg-1%"
-        send "&e - Display Name = %colored arg-2%"
-        send "&e - Base Damage = &6%arg-3%"
-        send "&8 -"
-        send "&eEdit these attributes with /editItemAttribute."
+            loop {_currentModifiers::*}:
+                add "&8- &e%loop-value%" to lore of slot 14 of metadata tag "itemEditorGUI" of player
+        else:
+            # Registering the item
+            set tag "%arg-1%;gable.data" of {_nbt} to nbt compound of player's tool
+            set tag "%arg-1%;gable.displayName" of {_nbt} to arg-2
+            set tag "%arg-1%;gable.baseDamage" of {_nbt} to arg-3
+
+            set metadata tag "newItemEditorGUI" of player to chest inventory with 3 rows named "&0New Item: %arg-1%"
+            set slot 12 of metadata tag "newItemEditorGUI" of player to name tag named "&7Item Name" with lore "&7Currently: '%{_currentName} ? "Not Set"%'
+            set slot 13 of metadata tag "newItemEditorGUI" of player to paper named "&7Base Damage" with lore "&7Currently: '%{_currentBaseDamage} ? "Not Set"%'"
+            set slot 14 of metadata tag "newItemEditorGUI" of player to enchanted book named "&7Modifiers" with lore "&7Currently: "
+
+            loop
+
+            set string list tag "%arg-1%;gable.modifiers" of {_nbt} to {_modifiers::*}
 
 # arg-1: id of item
 # [arg-2]: give item with attributes displayed?
 command /giveItem <text> [<boolean=true>]:
     trigger:
-        set {_nbt} to nbt compound from file "plugins/Skript/scripts/items.dat"
-        set {_itemData} to tag "%arg-1%;data" of {_nbt}
-        set {_itemDamage} to tag "%arg-1%;baseDamage" of {_nbt}
-        set {_itemDisplayName} to tag "%arg-1%;displayName" of {_nbt}
+        set {_nbt} to nbt compound from file {@item-file}
+        set {_itemData} to tag "%arg-1%;gable.data" of {_nbt}
+        set {_itemDamage} to tag "%arg-1%;gable.baseDamage" of {_nbt}
+        set {_itemDisplayName} to tag "%arg-1%;gable.displayName" of {_nbt}
         set {_item} to item from nbt {_itemData}
 
         if arg-2 is true:
@@ -41,54 +56,18 @@ command /giveItem <text> [<boolean=true>]:
 
         give {_item} to player
 
-# arg-1: id of item
-# arg-2: value
-command /editItemDisplayName <text> <text>:
-    trigger:
-        set {_nbt} to nbt compound from file "plugins/Skript/scripts/items.dat"
-        if tag "%arg-1%;displayName" of {_nbt} exists:
-            set tag "%arg-1%;displayName" of {_nbt} to arg-2
-
-            save nbt file of {_nbt}
-
-            send "&7Set &e%arg-1%&7's display name to &e%arg-2%&7;"
-        else:
-            send "&cThe attribute &e'%arg-1%&e;displayName'&c does not exist."
-
-# arg-1: id of item
-# arg-2: value
-command /editItemBaseDamage <text> <num>:
-    trigger:
-        set {_nbt} to nbt compound from file "plugins/Skript/scripts/items.dat"
-        if tag "%arg-1%;baseDamage" of {_nbt} exists:
-            set tag "%arg-1%;baseDamage" of {_nbt} to arg-2
-
-            save nbt file of {_nbt}
-
-            send "&7Set &e%arg-1%&7's base damage to &e%arg-2%&7;"
-        else:
-            send "&cThe attribute &e'%arg-1%&e;baseDamage'&c does not exist."
-
 # arg-1: ID
 # [arg-2]: Display Name
 command /modifier <text> [<text>]:
     trigger:
-        set {_file} to nbt compound from file "plugins/Skript/scripts/modifiers.dat"
+        set {_file} to nbt compound from file {@modifier-file}
 
-        # Temporary until next SkBee update.
-        # set {_modList::*} to string list tag "modifierList" of {_file}
-
-        # if {_modList::*} does not contain arg-1:
-        #     add arg-1 to {_modList::*}
-        #    set string list tag "modifierList" of {_file} to {_modList::*}
-        #
-
-        set tag "%arg-1%;displayName" of {_file} to colored arg-2 if arg-2 is set
+        set tag "%arg-1%;gable.displayName" of {_file} to colored arg-2 if arg-2 is set
         save nbt file of {_file}
 
-        set metadata tag "modifier;current" of player to arg-1
+        set metadata tag "modifier.current" of player to arg-1
 
-        set {_displayName} to tag "%arg-1%;displayName" of {_file}
+        set {_displayName} to tag "%arg-1%;gable.displayName" of {_file}
         set metadata tag "regModGUI" of player to chest inventory with 3 rows named "%arg-1% : %colored {_displayName}%"
 
         # GUI Items
@@ -101,10 +80,10 @@ command /modifier <text> [<text>]:
             set {_modifierTag} to uncolored name of {_newItem}
 
             # Current modifier
-            set {_currentMod} to metadata tag "modifier;current" of player
+            set {_currentMod} to metadata tag "modifier.current" of player
 
             # Enchantments for the current working modifier
-            set {_enchants::*} to string list tag "%{_currentMod}%;modifiers" of {_file}
+            set {_enchants::*} to string list tag "%{_currentMod}%;gable.modifiers" of {_file}
 
             set line 1 of lore of {_newItem} to "&a&ltrue" if {_enchants::*} contains "%{_modifierTag}%" else "&c&lfalse"
             if {_enchants::*} contains "%{_modifierTag}%":
@@ -120,21 +99,16 @@ command /modifier <text> [<text>]:
 
 command /removeModifier <text>:
     trigger:
-        set {_file} to nbt compound from file "plugins/Skript/scripts/modifiers.dat"
+        set {_file} to nbt compound from file {@modifier-file}
         delete tag arg-1 of {_file}
         save nbt file of {_file}
         send "&7Deleted tag &e%arg-1%&7."
 
-function retrieveRootTags(filepath: string) :: objects:
-    set {_file} to nbt compound from file "%{_filepath}%"
-    loop nbt tags of {_file}:
-        add loop-value to {_tags::*}
-
-    return {_tags::*}
-
+# Tab completions for /removeModifier
 on tab complete of "/removeModifier":
-    set tab completions for position 1 to retrieveRootTags("plugins/Skript/scripts/modifiers.dat")
+    set tab completions for position 1 to retrieveRootTags({@modifier-file})
 
+# On click of an inventory slot
 on inventory click:
     if event-inventory = (metadata tag "regModGUI" of player):
         cancel event
@@ -142,23 +116,25 @@ on inventory click:
         if clicked slot is not air:
 
             # File and item-related metadata/nbt
-            set {_file} to nbt compound from file "plugins/Skript/scripts/modifiers.dat"
-            set {_currentMod} to metadata tag "modifier;current" of player
+            set {_file} to nbt compound from file {@modifier-file}
+            set {_currentMod} to metadata tag "modifier.current" of player
 
             # Enchantments of the current modifier
-            set {_enchants::*} to string list tag "%{_currentMod}%;modifiers" of {_file}
+            set {_enchants::*} to string list tag "%{_currentMod}%;gable.modifiers" of {_file}
 
+            # Raw name of clicked item
             set {_modifierTag} to uncolored name of clicked slot
 
+            # Write modifier
             if {_modifierTag} is not empty:
                 if {_enchants::*} does not contain "%{_modifierTag}%":
                     add "%{_modifierTag}%" to {_enchants::*}
                     send "enchants = %{_enchants::*}%"
-                    set string list tag "%{_currentMod}%;modifiers" of {_file} to {_enchants::*}
+                    set string list tag "%{_currentMod}%;gable.modifiers" of {_file} to {_enchants::*}
                 else:
                     remove "%{_modifierTag}%" from {_enchants::*}
                     send "enchants = %{_enchants::*}%"
-                    set string list tag "%{_currentMod}%;modifiers" of {_file} to {_enchants::*}
+                    set string list tag "%{_currentMod}%;gable.modifiers" of {_file} to {_enchants::*}
 
                 set line 1 of lore of clicked slot to "&a&ltrue" if {_enchants::*} contains "%{_modifierTag}%" else "&c&lfalse"
                 if {_enchants::*} contains "%{_modifierTag}%":
@@ -166,4 +142,15 @@ on inventory click:
                 else:
                     disenchant clicked slot
             
+            # Save changes
             save nbt file of {_file}
+
+# Functions
+
+# Retrieve root nbt tags from file.
+function retrieveRootTags(filepath: string) :: objects:
+    set {_file} to nbt compound from file "%{_filepath}%"
+    loop nbt tags of {_file}:
+        add loop-value to {_tags::*}
+
+    return {_tags::*}

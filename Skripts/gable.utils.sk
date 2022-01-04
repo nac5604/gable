@@ -1,0 +1,6 @@
+function retrieveRootTags(filepath: string) :: objects:
+    set {_file} to nbt compound from file "%{_filepath}%"
+    loop nbt tags of {_file}:
+        add loop-value to {_tags::*}
+
+    return {_tags::*}
