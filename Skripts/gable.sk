@@ -5,97 +5,48 @@
 options:
     item-file: "plugins/Skript/scripts/gable/items.dat"
     modifier-file: "plugins/Skript/scripts/gable/modifiers.dat"
+    temp-file: "plugins/Skript/scripts/gable/temp-data.dat"
 
-command /item <text> [<text=arg-1>] [<num=1>]:
+# arg-1: id of item
+# arg-2: displayname of item
+# arg-3: base damage of item
+
+command /item <text> [<text>] [<num=1>]:
     trigger:
-        set {_nbt} to nbt compound from file {@item-file}
+        set {_nbt} to nbt compound of {@temp-file}
 
-        set {_currentData} to tag "%arg-1%;gable.data" of {_nbt}
-        set {_currentName} to tag "%arg-1%;gable.displayName" of {_nbt}
-        set {_currentBaseDamage} to tag "%arg-1%;gable.baseDamage" of {_nbt}
-        set {_currentModifiers::*} to string list tag "%arg-1%;gable.modifiers"
+        set "%arg-1%;itemID" of {_nbt} to arg-1
+        set "%arg-1%;playerToolData" of {_nbt} to nbt compound of tool of player
+        set "%arg-1%;displayName" of {_nbt} to arg-2
+        set "%arg-1%;baseDamage" of {_nbt} to arg-3
+        set "%arg-1%;player" of {_nbt} to event-player
 
-        if tag "%arg-1%" of {_nbt} exists:
-            # Editing the item
-            set metadata tag "itemEditorGUI" of player to chest inventory with 3 rows named "&0Editing Item: %arg-1%"
-            set slot 12 of metadata tag "itemEditorGUI" of player to name tag named "&7Item Name" with lore "&7Currently: '%{_currentName} ? "Not Set"%'
-            set slot 13 of metadata tag "itemEditorGUI" of player to paper named "&7Base Damage" with lore "&7Currently: '%{_currentBaseDamage} ? "Not Set"%'"
-            set slot 14 of metadata tag "itemEditorGUI" of player to enchanted book named "&7Modifiers" with lore "&7Currently:"
+        save nbt file of {_nbt}
 
-            loop {_currentModifiers::*}:
-                add "&8- &e%loop-value%" to lore of slot 14 of metadata tag "itemEditorGUI" of player
-        else:
-            # Registering the item
-            set tag "%arg-1%;gable.data" of {_nbt} to nbt compound of player's tool
-            set tag "%arg-1%;gable.displayName" of {_nbt} to arg-2
-            set tag "%arg-1%;gable.baseDamage" of {_nbt} to arg-3
-
-            set metadata tag "newItemEditorGUI" of player to chest inventory with 3 rows named "&0New Item: %arg-1%"
-            set slot 12 of metadata tag "newItemEditorGUI" of player to name tag named "&7Item Name" with lore "&7Currently: '%{_currentName} ? "Not Set"%'
-            set slot 13 of metadata tag "newItemEditorGUI" of player to paper named "&7Base Damage" with lore "&7Currently: '%{_currentBaseDamage} ? "Not Set"%'"
-            set slot 14 of metadata tag "newItemEditorGUI" of player to enchanted book named "&7Modifiers" with lore "&7Currently: "
-
-            loop
-
-            set string list tag "%arg-1%;gable.modifiers" of {_nbt} to {_modifiers::*}
+        ShowGUI("gable.itemEditor", arg-1)
 
 # arg-1: id of item
 # [arg-2]: give item with attributes displayed?
-command /giveItem <text> [<boolean=true>]:
+command /giveItem <text>:
     trigger:
-        set {_nbt} to nbt compound from file {@item-file}
-        set {_itemData} to tag "%arg-1%;gable.data" of {_nbt}
-        set {_itemDamage} to tag "%arg-1%;gable.baseDamage" of {_nbt}
-        set {_itemDisplayName} to tag "%arg-1%;gable.displayName" of {_nbt}
-        set {_item} to item from nbt {_itemData}
-
-        if arg-2 is true:
-            add "&7Base Damage: &c%{_itemDamage}%" to lore of {_item}
-        
-            set name of {_item} to {_itemDisplayName}
-
-        give {_item} to player
+        set {_itemFile} to nbt compound of {@item-file}
+        set {_nbt} to tag "%arg-1%;gable.data" of {_itemFile}
+        give player item from nbt {_nbt}
 
 # arg-1: ID
 # [arg-2]: Display Name
-command /modifier <text> [<text>]:
+command /modifier <text> [<text>] [<item>]:
     trigger:
-        set {_file} to nbt compound from file {@modifier-file}
+        set {_nbt} to nbt compound of {@temp-file}
 
-        set tag "%arg-1%;gable.displayName" of {_file} to colored arg-2 if arg-2 is set
-        save nbt file of {_file}
+        set tag "%arg-1%;player" of {_nbt} to event-player
+        set tag "%arg-1%;modifier" of {_nbt} to arg-1
+        set tag "%arg-1%;displayName" of {_nbt} to arg-2
+        set tag "%arg-1%;displayItem" of {_nbt} to arg-3
 
-        set metadata tag "modifier.current" of player to arg-1
+        save nbt file of {_nbt}
 
-        set {_displayName} to tag "%arg-1%;gable.displayName" of {_file}
-        set metadata tag "regModGUI" of player to chest inventory with 3 rows named "%arg-1% : %colored {_displayName}%"
-
-        # GUI Items
-        set slot 0 of metadata tag "regModGUI" of player to slime ball named "&6Extra Knockback"
-        set slot 1 of metadata tag "regModGUI" of player to netherite sword with all flags hidden named "&6Extra Sharp"
-
-        loop all items in (metadata tag "regModGUI" of player):
-            set {_newItem} to loop-item with all flags hidden
-
-            set {_modifierTag} to uncolored name of {_newItem}
-
-            # Current modifier
-            set {_currentMod} to metadata tag "modifier.current" of player
-
-            # Enchantments for the current working modifier
-            set {_enchants::*} to string list tag "%{_currentMod}%;gable.modifiers" of {_file}
-
-            set line 1 of lore of {_newItem} to "&a&ltrue" if {_enchants::*} contains "%{_modifierTag}%" else "&c&lfalse"
-            if {_enchants::*} contains "%{_modifierTag}%":
-                enchant {_newItem} with efficiency 0
-            else:
-                disenchant {_newItem}
-
-            set slot index of loop-item of metadata tag "regModGUI" of player to {_newItem}
-
-        save nbt file of {_file}
-
-        open (metadata tag "regModGUI" of player) to player
+        ShowGUI("gable.modifierEditor", arg-1)
 
 command /removeModifier <text>:
     trigger:
@@ -108,49 +59,6 @@ command /removeModifier <text>:
 on tab complete of "/removeModifier":
     set tab completions for position 1 to retrieveRootTags({@modifier-file})
 
-# On click of an inventory slot
-on inventory click:
-    if event-inventory = (metadata tag "regModGUI" of player):
-        cancel event
-
-        if clicked slot is not air:
-
-            # File and item-related metadata/nbt
-            set {_file} to nbt compound from file {@modifier-file}
-            set {_currentMod} to metadata tag "modifier.current" of player
-
-            # Enchantments of the current modifier
-            set {_enchants::*} to string list tag "%{_currentMod}%;gable.modifiers" of {_file}
-
-            # Raw name of clicked item
-            set {_modifierTag} to uncolored name of clicked slot
-
-            # Write modifier
-            if {_modifierTag} is not empty:
-                if {_enchants::*} does not contain "%{_modifierTag}%":
-                    add "%{_modifierTag}%" to {_enchants::*}
-                    send "enchants = %{_enchants::*}%"
-                    set string list tag "%{_currentMod}%;gable.modifiers" of {_file} to {_enchants::*}
-                else:
-                    remove "%{_modifierTag}%" from {_enchants::*}
-                    send "enchants = %{_enchants::*}%"
-                    set string list tag "%{_currentMod}%;gable.modifiers" of {_file} to {_enchants::*}
-
-                set line 1 of lore of clicked slot to "&a&ltrue" if {_enchants::*} contains "%{_modifierTag}%" else "&c&lfalse"
-                if {_enchants::*} contains "%{_modifierTag}%":
-                    enchant clicked slot with efficiency 0
-                else:
-                    disenchant clicked slot
-            
-            # Save changes
-            save nbt file of {_file}
-
-# Functions
-
-# Retrieve root nbt tags from file.
-function retrieveRootTags(filepath: string) :: objects:
-    set {_file} to nbt compound from file "%{_filepath}%"
-    loop nbt tags of {_file}:
-        add loop-value to {_tags::*}
-
-    return {_tags::*}
+# Tab completions for /removeModifier
+on tab complete of "/giveItem":
+    set tab completions for position 1 to retrieveRootTags({@item-file})

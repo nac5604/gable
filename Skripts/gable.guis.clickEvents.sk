@@ -1,6 +1,7 @@
 options:
     item-file: "plugins/Skript/scripts/gable/items.dat"
     modifier-file: "plugins/Skript/scripts/gable/modifiers.dat"
+    temp-file: "plugins/Skript/scripts/gable/temp-data.dat"
 
 on inventory-click:
     if event-inventory = (metadata tag "gable.modifierEditor" of player):

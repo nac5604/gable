@@ -1,8 +1,11 @@
 options:
     item-file: "plugins/Skript/scripts/gable/items.dat"
     modifier-file: "plugins/Skript/scripts/gable/modifiers.dat"
+    temp-file: "plugins/Skript/scripts/gable/temp-data.dat"
 
-function ShowGUI(gui_id: text, data_in: object):
+function ShowGUI(gui_id: text, data_in_tag: text):
+
+    set {_dataInFile} to nbt compound of {@temp-file}
 
     # Required variables:
     # - player : player
@@ -13,28 +16,31 @@ function ShowGUI(gui_id: text, data_in: object):
     # - displayName : string
     if {_gui_id} is "gable.modifierEditor":
 
-        set {_p} to {_data_in::player}
+        set {_p} to tag "%{_data_in_tag}%;player" of {_dataInFile}
+        set {_modifier} to tag "%{_data_in_tag}%;modifier" of {_dataInFile}
+        set {_displayItem} to item from nbt tag "%{_data_in_tag}%;displayItem" of {_displayItem}
+        set {_displayName} to tag "%{_data_in_tag}%;displayName" of {_displayName}
 
         set {_modifierFile} to nbt compound from file {@modifier-file}
-        
-        if {_data_in::displayItem} is not set:
-            if tag "%{_data_in::modifier}%;gable.displayItem" of {_modifierFile} is not set:
-                set tag "%{_data_in::modifier}%;gable.displayItem" of {_modifierFile} to stone
-        else:
-            set tag "%{_data_in::modifier}%;gable.displayItem" of {_modifierFile} to {_data_in::displayItem}
 
-        if {_data_in::displayName} is not set:
-            if tag "%{_data_in::modifier}%;gable.displayName" of {_modifierFile} is not set:
-                set tag "%{_data_in::modifier}%;gable.displayName" of {_modifierFile} to {_data_in::modifier}
+        if {_displayItem} is not set:
+            if tag "%{_modifier}%;gable.displayItem" of {_modifierFile} is not set:
+                set tag "%{_modifier}%;gable.displayItem" of {_modifierFile} to stone
         else:
-            set tag "%{_data_in::modifier}%;gable.displayName" of {_modifierFile} to {_data_in::displayName}
+            set tag "%{_modifier}%;gable.displayItem" of {_modifierFile} to {_displayItem}
+
+        if {_displayName} is not set:
+            if tag "%{_modifier}%;gable.displayName" of {_modifierFile} is not set:
+                set tag "%{_modifier}%;gable.displayName" of {_modifierFile} to {_modifier}
+        else:
+            set tag "%{_modifier}%;gable.displayName" of {_modifierFile} to {_displayName}
 
         save nbt file of {_modifierFile}
 
-        set metadata tag "gable.currentModifier" of {_p} to {_data_in::modifier}
+        set metadata tag "gable.currentModifier" of {_p} to {_modifier}
 
-        set {_displayName} to tag "%{_data_in::modifier}%;gable.displayName" of {_modifierFile}
-        set metadata tag {_gui_id} of {_p} to chest inventory with 3 rows named "%{_data_in::modifier}% : %colored {_displayName}%"
+        set {_displayName} to tag "%{_modifier}%;gable.displayName" of {_modifierFile}
+        set metadata tag {_gui_id} of {_p} to chest inventory with 3 rows named "%{_modifier}% : %colored {_displayName}%"
 
         # GUI Items
         set slot 0 of metadata tag {_gui_id} of {_p} to slime ball named "&6Extra Knockback"
@@ -46,7 +52,7 @@ function ShowGUI(gui_id: text, data_in: object):
             set {_modifierTag} to uncolored name of {_newItem}
 
             # Enchantments for the current working modifier
-            set {_enchants::*} to string list tag "%{_data_in::modifier}%;gable.modifiers" of {_modifierFile}
+            set {_enchants::*} to string list tag "%{_modifier}%;gable.modifiers" of {_modifierFile}
 
             set line 1 of lore of {_newItem} to "&a&ltrue" if {_enchants::*} contains "%{_modifierTag}%" else "&c&lfalse"
             if {_enchants::*} contains "%{_modifierTag}%":
@@ -56,38 +62,51 @@ function ShowGUI(gui_id: text, data_in: object):
 
             set slot index of loop-item of metadata tag {_gui_id} of {_p} to {_newItem}
 
+        delete tag "%{_modifier}%" form {_modifierFile}
         save nbt file of {_modifierFile}
 
         open (metadata tag {_gui_id} of {_p}) to {_p}
 
     # Required variables:
-    # - isNewItem : boolean
-    # - modifier : string
+    # - itemID : string
     # - playerToolData : nbt compound
     # - displayName : string
     # - baseDamage : number
     # - player : player
     else if {_gui_id} is "gable.itemEditor":
+
+        set {_p} to tag "%{_data_in_tag}%;player" of {_dataInFile}
+        set {_itemID} to item from tag "%{_data_in_tag}%;itemID" of {_dataInFile}
+        set {_playerToolData} to nbt compound of "%{_data_in_tag}%;data" of {_dataInFile}
+        set {_displayName} to tag "%{_data_in_tag}%;displayName" of {_dataInFile}
+        set {_baseDamage} to tag "%{_data_in_tag}%;baseDamage" of {_dataInFile}
+
         set {_nbt} to nbt compound from file {@item-file}
 
         # If the item is new
-        if tag "%{_data_in::modifier}%" of {_nbt} does not exist:
-            set tag "%{_data_in::modifier}%;gable.data" of {_nbt} to nbt compound of {_data_in::playerToolData}
-            set tag "%{_data_in::modifier}%;gable.displayName" of {_nbt} to {_data_in::displayName}
-            set tag "%{_data_in::modifier}%;gable.baseDamage" of {_nbt} to {_data_in::baseDamage}
+        if tag "%{_itemID}%" of {_nbt} does not exist:
+            set tag "%{_itemID}%;gable.data" of {_nbt} to nbt compound of {_playerToolData}
+            set tag "%{_itemID}%;gable.displayName" of {_nbt} to {_displayName}
+            set tag "%{_itemID}%;gable.baseDamage" of {_nbt} to {_baseDamage}
+
+            send "&eCreated item &r'%{_itemID}%'&e named &r'%{_displayName}%'&e." to {_p}
 
             save nbt file of {_nbt}
         
-        set {_playerToolData} to item from nbt tag "%{_data_in::modifier}%;gable.data" from {_nbt}
-        set {_displayName} to tag "%{_data_in::modifier}%;gable.displayName" from {_nbt}
-        set {_baseDamage} to tag "%{_data_in::modifier}%;gable.baseDamage"
+        set {_itemNBT} to tag "%{_itemID}%;gable.data" of {_nbt}
+
+        set {_playerToolData} to item from nbt {_itemNBT}
+        set {_displayName} to tag "%{_itemID}%;gable.displayName" of {_nbt}
+        set {_baseDamage} to tag "%{_itemID}%;gable.baseDamage" of {_nbt}
              
-        set metadata tag {_gui_id} of {_data_in::player} to chest inventory with 3 rows named "&0Editing Item: %{_displayName}%"
+        set metadata tag {_gui_id} of {_p} to chest inventory with 3 rows named "&0Editing Item: %{_displayName}%"
 
-        set slot 10 of metadata tag {_gui_id} of {_data_in::player} to {_playerToolData}
-        set slot 12 of metadata tag {_gui_id} of {_data_in::player} to name tag named "&7Item Name" with lore "&7Currently: '%{_displayName} ? "Not Set"%'
-        set slot 13 of metadata tag {_gui_id} of {_data_in::player} to paper named "&7Base Damage" with lore "&7Currently: '%{_baseDamage} ? "Not Set"%'"
-        set slot 14 of metadata tag {_gui_id} of {_data_in::player} to enchanted book named "&7Modifiers"
-        set slot 16 of metadata tag {_gui_id} of {_data_in::player} to black stained glass pane named ""
+        set slot 10 of metadata tag {_gui_id} of {_p} to {_playerToolData}
+        set slot 12 of metadata tag {_gui_id} of {_p} to name tag named "&7Item Name" with lore "&7Currently: '%{_displayName} ? "Not Set"%'"
+        set slot 13 of metadata tag {_gui_id} of {_p} to paper named "&7Base Damage" with lore "&7Currently: '%{_baseDamage} ? "Not Set"%'"
+        set slot 14 of metadata tag {_gui_id} of {_p} to enchanted book named "&7Modifiers"
+        set slot 16 of metadata tag {_gui_id} of {_p} to black stained glass pane named ""
 
-        open (metadata tag {_gui_id} of {_data_in::player}) to {_data_in::player}
+        delete tag "%{_modifier}%" form {_modifierFile}
+
+        open (metadata tag {_gui_id} of {_p}) to {_p}
